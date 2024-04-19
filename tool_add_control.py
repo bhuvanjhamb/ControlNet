@@ -24,7 +24,7 @@ def get_node_name(name, parent_name):
     return True, name[len(parent_name):]
 
 
-model = create_model(config_path='./models/cldm_v15.yaml')
+model = create_model(config_path='./models/control_v11e_sd15_ip2p.yaml')  # changing to iPixtoPix config yaml
 
 pretrained_weights = torch.load(input_path)
 if 'state_dict' in pretrained_weights:
