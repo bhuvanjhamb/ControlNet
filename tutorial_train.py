@@ -19,6 +19,8 @@ only_mid_control = False
 
 
 # First use cpu to load models. Pytorch Lightning will automatically move it to GPUs.
+# breakpoint()
+# model = create_model('./models/cldm_v15.yaml').cpu()
 model = create_model('./models/control_v11e_sd15_ip2p.yaml').cpu()
 model.load_state_dict(load_state_dict(resume_path, location='cpu'))
 model.learning_rate = learning_rate
@@ -38,5 +40,5 @@ trainer = pl.Trainer(gpus=1, precision=32, callbacks=[logger])
 
 
 # Train!
-breakpoint()
+# breakpoint()
 trainer.fit(model, dataloader)

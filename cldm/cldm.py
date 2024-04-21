@@ -14,7 +14,8 @@ from einops import rearrange, repeat
 from torchvision.utils import make_grid
 from ldm.modules.attention import SpatialTransformer
 from ldm.modules.diffusionmodules.openaimodel import UNetModel, TimestepEmbedSequential, ResBlock, Downsample, AttentionBlock
-from ldm.models.diffusion.ddpm import LatentDiffusion
+# from ldm.models.diffusion.ddpm import LatentDiffusion
+from ldm.models.diffusion.ddpm_modified import LatentDiffusion
 from ldm.util import log_txt_as_img, exists, instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 
@@ -316,6 +317,7 @@ class ControlLDM(LatentDiffusion):
 
     @torch.no_grad()
     def get_input(self, batch, k, bs=None, *args, **kwargs):
+        breakpoint()
         x, c = super().get_input(batch, self.first_stage_key, *args, **kwargs)
         control = batch[self.control_key]
         if bs is not None:
@@ -324,10 +326,16 @@ class ControlLDM(LatentDiffusion):
         control = einops.rearrange(control, 'b h w c -> b c h w')
         control = control.to(memory_format=torch.contiguous_format).float()
         return x, dict(c_crossattn=[c], c_concat=[control])
+    
+
+        # # control net style
+        # enc_control = self.model.get_first_stage_encoding(self.model.encode_first_stage(control))
+        # return x, dict(c_crossattn=[c], c_concat=[enc_control])
 
     def apply_model(self, x_noisy, t, cond, *args, **kwargs):
         assert isinstance(cond, dict)
         diffusion_model = self.model.diffusion_model
+        breakpoint()
 
         cond_txt = torch.cat(cond['c_crossattn'], 1)
 
@@ -335,6 +343,7 @@ class ControlLDM(LatentDiffusion):
             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
         else:
             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
+            # breakpoint()
             control = [c * scale for c, scale in zip(control, self.control_scales)]
             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
 
